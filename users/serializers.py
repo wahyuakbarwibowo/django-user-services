@@ -20,6 +20,10 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

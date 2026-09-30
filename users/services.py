@@ -2,7 +2,8 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.db import transaction
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -20,9 +21,20 @@ def register_user(*, username: str, email: str, password: str):
     return user
 
 
-def login_user(*, username: str, password: str) -> str:
+class InvalidToken(Exception):
+    pass
+
+
+def login_user(*, username: str, password: str) -> dict:
     user = authenticate(username=username, password=password)
     if user is None:
         raise InvalidCredentials
-    token, _ = Token.objects.get_or_create(user=user)
-    return token.key
+    refresh = RefreshToken.for_user(user)
+    return {"access": str(refresh.access_token), "refresh": str(refresh)}
+
+
+def logout_user(*, refresh: str) -> None:
+    try:
+        RefreshToken(refresh).blacklist()
+    except TokenError as exc:
+        raise InvalidToken from exc
