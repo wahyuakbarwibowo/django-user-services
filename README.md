@@ -1,14 +1,19 @@
 # django-user-services
 
-User auth API (Django + DRF): register, login (token), user detail.
+User auth API (Django + DRF + SimpleJWT): register, login, refresh, logout, user detail.
 
 ## Endpoints
 
 | Method | Path                   | Auth            | Body                              |
 |--------|------------------------|-----------------|-----------------------------------|
 | POST   | `/api/auth/register/`  | -               | `username`, `email`, `password`   |
-| POST   | `/api/auth/login/`     | -               | `username`, `password` → `token`  |
-| GET    | `/api/auth/me/`        | `Token <token>` | -                                 |
+| POST   | `/api/auth/login/`     | -               | `username`, `password` → `access`, `refresh` |
+| POST   | `/api/auth/refresh/`   | -               | `refresh` → new `access`, `refresh` (rotated) |
+| POST   | `/api/auth/logout/`    | `Bearer <access>` | `refresh` (blacklisted)         |
+| GET    | `/api/auth/me/`        | `Bearer <access>` | -                               |
+
+Login is limited to 5/min and register to 10/hour per IP (`THROTTLE_LOGIN`, `THROTTLE_REGISTER`).
+Access token lives 15 min, refresh token 7 days (`JWT_ACCESS_MINUTES`, `JWT_REFRESH_DAYS`).
 
 Passwords are hashed with PBKDF2-SHA256 (Django default) and checked against Django's password validators.
 
